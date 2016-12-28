@@ -32,6 +32,10 @@ variable "bucket_name" {
   description = "The name of the S3 bucket to which the application will be deployed"
 }
 
-variable "bucket_policy" {
-  description = "The contents of the policy file"
+variable "bucket_iam_user_arn" {
+  description = "The arn of the IAM user to access this bucket"
+}
+
+variable "route53_zone_id" {
+  description = "The zone id that the bucket hostname will be placed in"
 }

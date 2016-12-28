@@ -61,13 +61,51 @@ resource "aws_elb_attachment" "manager" {
   instance = "${aws_instance.manager.id}"
 }
 
+
+
+##### S3 Bucket to Host Application
+# Create a policy for the bucket
+data "aws_iam_policy_document" "app_bucket" {
+  statement {
+    effect    = "Allow"
+    sid       = "Stmt1EmberCLIS3DeployPolicy"
+    actions   = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:PutObjectACL",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.bucket_name}/*",
+    ]
+    principals {
+      type = "AWS"
+      identifiers = ["${var.bucket_iam_user_arn}"]
+    }
+  }
+}
+
 # Create a bucket for the Application
 resource "aws_s3_bucket" "app-bucket" {
   bucket = "${var.bucket_name}"
-  policy = "${var.bucket_policy}"
+  policy = "${data.aws_iam_policy_document.app_bucket.json}"
   region = "${var.region}"
   acl    = "public-read"
   website {
     index_document = "index.html"
+  }
+  provisioner "local-exec" {
+    command = "echo \"  AWS_BUCKET_${var.environment}: ${var.bucket_name}\n  AWS_REGION_${var.environment}: ${var.region}\" > /tmp/s3_bucket_${var.environment}.yml"
+  }
+}
+
+# Create a DNS Record for the bucket
+resource "aws_route53_record" "app-bucket" {
+  zone_id = "${var.route53_zone_id}"
+  name    = "${var.bucket_name}"
+  type    = "A"
+  alias {
+    name                   = "${aws_s3_bucket.app-bucket.website_domain}"
+    zone_id                = "${aws_s3_bucket.app-bucket.hosted_zone_id}"
+    evaluate_target_health = true
   }
 }

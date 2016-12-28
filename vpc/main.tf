@@ -1,31 +1,31 @@
 # modules/vpc/main.tf
 
-# Create a VPC to launch our instances into
-resource "aws_vpc" "example" {
-  cidr_block = "172.16.0.0/20"
+# Create a VPC into which resources are provisioned
+resource "aws_vpc" "main" {
+  cidr_block = "${var.vpc_cidr_block}"
   tags {
     Application = "${var.application}"
     Environment = "${var.environment}"
-    Name        = "${var.environment}"
+    Name        = "${var.application}-${var.environment}"
   }
 }
 
-# Create an internet gateway to give our subnet access to the outside world
-resource "aws_internet_gateway" "example" {
-  vpc_id = "${aws_vpc.example.id}"
+# Create an internet gateway to give the subnet access to the outside world
+resource "aws_internet_gateway" "main" {
+  vpc_id = "${aws_vpc.main.id}"
 }
 
 # Grant the VPC internet access on its main route table
 resource "aws_route" "internet_access" {
-  route_table_id         = "${aws_vpc.example.main_route_table_id}"
+  route_table_id         = "${aws_vpc.main.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = "${aws_internet_gateway.example.id}"
+  gateway_id             = "${aws_internet_gateway.main.id}"
 }
 
-# Create a subnet to launch our instances into
+# Create a subnet into which instances are launched
 resource "aws_subnet" "public" {
-  vpc_id                  = "${aws_vpc.example.id}"
-  cidr_block              = "172.16.1.0/24"
+  vpc_id                  = "${aws_vpc.main.id}"
+  cidr_block              = "${var.public_cidr_block}"
   map_public_ip_on_launch = true
   tags {
     Environment = "${var.environment}"
@@ -36,7 +36,7 @@ resource "aws_subnet" "public" {
 resource "aws_security_group" "appserver" {
   name        = "appserver"
   description = "App Server Security Group"
-  vpc_id      = "${aws_vpc.example.id}"
+  vpc_id      = "${aws_vpc.main.id}"
   tags {
     Environment = "${var.environment}"
     Name        = "appserver-${var.application}"
@@ -79,7 +79,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
 resource "aws_security_group" "elb" {
   name        = "appserver-elb"
   description = "ELB Security Group"
-  vpc_id      = "${aws_vpc.example.id}"
+  vpc_id      = "${aws_vpc.main.id}"
   tags {
     Environment = "${var.environment}"
     Name        = "elb-${var.application}"
@@ -107,8 +107,8 @@ resource "aws_security_group_rule" "elb_allow_all_outbound" {
 }
 
 
-# TODO: Change to an ALB
-resource "aws_elb" "example" {
+# TODO: Add ALB resource
+resource "aws_elb" "main" {
   name                      = "${var.application}-elb"
   security_groups           = ["${aws_security_group.elb.id}"]
   subnets                   = ["${aws_subnet.public.id}"]
@@ -134,6 +134,42 @@ resource "aws_elb" "example" {
   tags {
     Application = "${var.application}"
     Environment = "${var.environment}"
-    Name        = "appserver-elb"
+    Name        = "appserver"
+  }
+}
+
+
+# Create subdomain
+resource "aws_route53_zone" "subdomain" {
+  name    = "${var.environment}.${var.domain}"
+  comment = "Managed by Terraform"
+  tags {
+    Environment = "${var.environment}"
+  }
+}
+
+# Create NS records for the subdomain in the parent domain
+resource "aws_route53_record" "subdomain_ns" {
+  zone_id = "${var.primary_zone_id}"
+  name    = "${var.environment}.${var.domain}."
+  type    = "NS"
+  ttl     = "300"
+  records = [
+    "${aws_route53_zone.subdomain.name_servers.0}",
+    "${aws_route53_zone.subdomain.name_servers.1}",
+    "${aws_route53_zone.subdomain.name_servers.2}",
+    "${aws_route53_zone.subdomain.name_servers.3}"
+  ]
+}
+
+# Create an ALIAS record for the API server pointing to the ELB
+resource "aws_route53_record" "elb" {
+  zone_id = "${aws_route53_zone.subdomain.zone_id}"
+  name    = "${var.application}-api.${var.environment}.${var.domain}"
+  type    = "A"
+  alias {
+    name                   = "${aws_elb.main.dns_name}"
+    zone_id                = "${aws_elb.main.zone_id}"
+    evaluate_target_health = true
   }
 }
