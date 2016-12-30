@@ -173,3 +173,15 @@ resource "aws_route53_record" "elb" {
     evaluate_target_health = true
   }
 }
+
+# Create an Alternative ALIAS record for the API server pointing to the ELB
+resource "aws_route53_record" "elb-alt" {
+  zone_id = "${var.primary_zone_id}"
+  name    = "${var.application}-api-${var.environment}.${var.domain}"
+  type    = "A"
+  alias {
+    name                   = "${aws_elb.main.dns_name}"
+    zone_id                = "${aws_elb.main.zone_id}"
+    evaluate_target_health = true
+  }
+}
