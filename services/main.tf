@@ -86,10 +86,11 @@ data "aws_iam_policy_document" "app_bucket" {
 
 # Create a bucket for the Application
 resource "aws_s3_bucket" "app-bucket" {
-  bucket = "${var.bucket_name}"
-  policy = "${data.aws_iam_policy_document.app_bucket.json}"
-  region = "${var.region}"
-  acl    = "public-read"
+  bucket        = "${var.bucket_name}"
+  policy        = "${data.aws_iam_policy_document.app_bucket.json}"
+  region        = "${var.region}"
+  acl           = "public-read"
+  force_destroy = true
   website {
     index_document = "index.html"
   }
