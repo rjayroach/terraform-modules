@@ -36,8 +36,8 @@ resource "aws_instance" "manager" {
   subnet_id              = "${var.subnet_id}"
   tags {
     Environment = "${var.environment}"
-    Name        = "manager-1"
-    Role        = "manager"
+    Name        = "master-1"
+    Role        = "master"
   }
 }
 
