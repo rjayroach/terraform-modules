@@ -36,8 +36,8 @@ resource "aws_instance" "manager" {
   subnet_id              = "${var.subnet_id}"
   tags {
     Environment = "${var.environment}"
-    Name        = "manager-1"
-    Role        = "manager"
+    Name        = "master-1"
+    Role        = "master"
   }
 }
 
@@ -86,10 +86,11 @@ data "aws_iam_policy_document" "app_bucket" {
 
 # Create a bucket for the Application
 resource "aws_s3_bucket" "app-bucket" {
-  bucket = "${var.bucket_name}"
-  policy = "${data.aws_iam_policy_document.app_bucket.json}"
-  region = "${var.region}"
-  acl    = "public-read"
+  bucket        = "${var.bucket_name}"
+  policy        = "${data.aws_iam_policy_document.app_bucket.json}"
+  region        = "${var.region}"
+  acl           = "public-read"
+  force_destroy = true
   website {
     index_document = "index.html"
     error_document = "index.html"
