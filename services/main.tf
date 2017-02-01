@@ -92,6 +92,7 @@ resource "aws_s3_bucket" "app-bucket" {
   acl    = "public-read"
   website {
     index_document = "index.html"
+    error_document = "index.html"
   }
   provisioner "local-exec" {
     command = "echo \"  AWS_BUCKET_${var.environment}: ${var.bucket_name}\n  AWS_REGION_${var.environment}: ${var.region}\" > /tmp/s3_bucket_${var.environment}.yml"
