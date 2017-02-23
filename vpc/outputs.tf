@@ -1,13 +1,8 @@
 # modules/vpc/outputs.tf
 
-# Needed for the service instances to attach to the ELB
-output "elb_id" {
-  value = "${aws_elb.main.id}"
-}
-
 output "vpc_security_group_ids" {
   # value = ["${aws_security_group.appserver.id}"]
-  value = "${aws_security_group.appserver.id}"
+  value = "${aws_security_group.public.id}"
 }
 
 output "subnet_id" {
@@ -16,4 +11,8 @@ output "subnet_id" {
 
 output "subdomain_zone_id" {
   value = "${aws_route53_zone.subdomain.zone_id}"
+}
+
+output "vpc_id" {
+  value = "${aws_vpc.main.id}"
 }
