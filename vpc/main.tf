@@ -1,4 +1,61 @@
-# modules/vpc/main.tf
+// variables
+
+variable "aws_region" { }
+
+variable "vpc_cidr_block" {
+  description = "The CIDR block for the VPC"
+  default     = "172.16.0.0/20"
+}
+
+# NOTE: Not currently implemented
+variable "private_cidr_block" {
+  description = "The CIDR block for the private subnet"
+  default     = "172.16.0.0/24"
+}
+
+variable "public_cidr_block" {
+  description = "The CIDR block for the public subnet"
+  default     = "172.16.1.0/24"
+}
+
+variable "domain" {
+  description = "The parent domain for the subdomain"
+}
+
+variable "environment" {
+  description = "The environment to which the resources belong"
+}
+
+/*
+variable "primary_zone_id" {
+
+  description = "The zone id of the parent domain"
+}
+*/
+
+// outputs
+
+output "vpc_security_group_ids" {
+  # value = ["${aws_security_group.appserver.id}"]
+  value = "${module.global-allow.group_id}"
+}
+
+output "subnet_id" {
+  value = "${aws_subnet.public.id}"
+}
+
+/*
+output "subdomain_zone_id" {
+  value = "${module.route53.subdomain.zone_id}"
+}
+*/
+
+output "vpc_id" {
+  value = "${aws_vpc.main.id}"
+}
+
+// implementation
+
 # Creates:
 # - A VPC tagged with the Environment
 # - An Internet Gateway for EC2s to reach the Internet
@@ -32,54 +89,60 @@ resource "aws_route" "internet_access" {
 # Create a subnet into which instances are launched
 resource "aws_subnet" "public" {
   vpc_id                  = "${aws_vpc.main.id}"
+  availability_zone       = "${var.aws_region}a"
   cidr_block              = "${var.public_cidr_block}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "public-${var.environment}"
+    Visibility = "public"
+    Name = "public-${var.environment}"
   }
 }
 
-resource "aws_security_group" "public" {
-  name        = "appserver"
-  description = "Public Subnet Security Group"
-  vpc_id      = "${aws_vpc.main.id}"
+resource "aws_subnet" "private" {
+  vpc_id                  = "${aws_vpc.main.id}"
+  availability_zone       = "${var.aws_region}a"
+  cidr_block              = "${var.private_cidr_block}"
+  map_public_ip_on_launch = true
   tags {
-    Name        = "${var.environment}-public"
+    Visibility = "private"
+    Name = "private-${var.environment}"
   }
 }
 
-resource "aws_security_group_rule" "allow_ssh_inbound" {
-  type = "ingress"
-  security_group_id = "${aws_security_group.public.id}"
-
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-}
-
-
-# TODO: this should probably be separated out to another template
-# Create a subdomain for the VPC
-resource "aws_route53_zone" "subdomain" {
-  name    = "${var.environment}.${var.domain}"
-  comment = "Managed by Terraform"
+/*
+resource "aws_subnet" "public-b" {
+  vpc_id                  = "${aws_vpc.main.id}"
+  availability_zone       = "${var.aws_region}b"
+  cidr_block              = "${var.public_cidr_b_block}"
+  map_public_ip_on_launch = true
   tags {
-    Environment = "${var.environment}"
+    Name = "public-${var.environment}"
   }
 }
+*/
 
-# TODO: this would also be separated out
-# Create NS records for the subdomain in the parent domain
-resource "aws_route53_record" "subdomain_ns" {
-  zone_id = "${var.primary_zone_id}"
-  name    = "${var.environment}.${var.domain}."
-  type    = "NS"
-  ttl     = "300"
-  records = [
-    "${aws_route53_zone.subdomain.name_servers.0}",
-    "${aws_route53_zone.subdomain.name_servers.1}",
-    "${aws_route53_zone.subdomain.name_servers.2}",
-    "${aws_route53_zone.subdomain.name_servers.3}"
-  ]
+/*
+module "adsync" {
+  source          = "../adsync"
+  vpc_id          = "${aws_vpc.main.id}"
+  domain          = "${var.domain}"
+  adsync_password = "super_secret"
 }
+*/
+
+module "global-allow" {
+  source = "../sec-groups"
+  vpc_id = "${aws_vpc.main.id}"
+  environment = "${var.environment}"
+}
+
+module "vpn" {
+  source = "../vpn"
+  vpc_id = "${aws_vpc.main.id}"
+}
+
+/*
+module "route53" {
+  source = "../route53"
+}
+*/
