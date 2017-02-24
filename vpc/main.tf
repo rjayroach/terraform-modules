@@ -1,6 +1,8 @@
 // variables
 
-variable "aws_region" { }
+variable "region" { }
+
+variable "include_public_subnet" { default = false }
 
 variable "vpc_cidr_block" {
   description = "The CIDR block for the VPC"
@@ -88,8 +90,10 @@ resource "aws_route" "internet_access" {
 
 # Create a subnet into which instances are launched
 resource "aws_subnet" "public" {
+  count = "${var.include_public_subnet}"
+
   vpc_id                  = "${aws_vpc.main.id}"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "${var.region}a"
   cidr_block              = "${var.public_cidr_block}"
   map_public_ip_on_launch = true
   tags {
@@ -100,7 +104,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   vpc_id                  = "${aws_vpc.main.id}"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "${var.region}a"
   cidr_block              = "${var.private_cidr_block}"
   map_public_ip_on_launch = true
   tags {
@@ -112,7 +116,7 @@ resource "aws_subnet" "private" {
 /*
 resource "aws_subnet" "public-b" {
   vpc_id                  = "${aws_vpc.main.id}"
-  availability_zone       = "${var.aws_region}b"
+  availability_zone       = "${var.region}b"
   cidr_block              = "${var.public_cidr_b_block}"
   map_public_ip_on_launch = true
   tags {

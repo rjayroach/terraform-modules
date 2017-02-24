@@ -4,7 +4,9 @@ variable "aws_region" {}
 
 variable "ec2_instance_type" { default = "t2.micro" }
 
-variable "user" {}
+variable "environment" { default = "development" }
+
+variable "user" { default = "WOOT" }
 
 variable "vpc_id" {}
 
@@ -32,5 +34,6 @@ resource "aws_instance" "ec2" {
 module "global-allow" {
   source = "../sec-groups"
 
-  vpc_id =
+  environment = "${var.environment}"
+  vpc_id = "${var.vpc_id}"
 }

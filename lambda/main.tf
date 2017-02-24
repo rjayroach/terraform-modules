@@ -1,6 +1,6 @@
 // variables
 
-variable "aws_region" { }
+variable "region" { }
 
 variable "lambda_payload_url" { default = "hello-world-python.zip" }
 
@@ -12,23 +12,22 @@ variable "lambda_memory"      { default = "128"}
 
 // implementation
 
+data "aws_iam_policy_document" "lambda" {
+  statement = {
+    effect = "Allow"
+    actions = [
+      "sts:AssumeRole"
+    ]
+    principals = {
+      type = "service"
+      identifiers = [ "lambda.amazonaws.com" ]
+    }
+  }
+}
+
 resource "aws_iam_role" "iam_for_lambda" {
   name = "iam_for_lambda"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
+  assume_role_policy = "${data.aws_iam_policy_document.lambda.json}"
 }
 
 resource "aws_lambda_function" "lambda" {
