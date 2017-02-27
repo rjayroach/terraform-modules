@@ -14,6 +14,7 @@ variable "vpc_id" {}
 
 // outputs
 
+
 // implementation
 
 resource "aws_directory_service_directory" "adsync" {

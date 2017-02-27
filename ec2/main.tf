@@ -26,7 +26,6 @@ resource "aws_instance" "ec2" {
   ]
 
   tags {
-    OS   = "Ubuntu"
     User = "${var.user}"
   }
 }
