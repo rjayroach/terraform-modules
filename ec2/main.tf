@@ -1,12 +1,12 @@
 // variables
 
-variable "aws_region" {}
+variable "region" {}
 
 variable "ec2_instance_type" { default = "t2.micro" }
 
 variable "environment" { default = "development" }
 
-variable "user" { default = "WOOT" }
+variable "user" {}
 
 variable "vpc_id" {}
 
@@ -19,7 +19,7 @@ output "public_ip" {
 // implementation
 
 resource "aws_instance" "ec2" {
-  ami = "ami-f824809b"
+  ami = "${looup("amis", "${var.region}", "")}"
   instance_type = "${var.ec2_instance_type}"
   vpc_security_group_ids = [
     "${module.global-allow.group_id}"

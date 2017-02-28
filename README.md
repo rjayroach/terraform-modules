@@ -15,7 +15,7 @@ git submodule add git@github.com:rjayroach/terraform-modules modules
 Updating the submodule to the latest code on master:
 
 ```bash
-git submodule update --remote --merge
+git submodule update --init --remote --merge
 ```
 
 ## Updating Code
