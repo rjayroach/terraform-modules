@@ -41,7 +41,7 @@ variable "debian-amis" {
 
 resource "aws_key_pair" "ansible" {
   key_name   = "ansible-${var.application}"
-  public_key = "${var.public_key}"
+  public_key = "${file("${var.public_key}")}"
 }
 
 # NOTE: the security group ids can maybe come directly from this template
@@ -176,7 +176,7 @@ resource "aws_security_group" "elb" {
 }
 
 resource "aws_security_group_rule" "elb_allow_https_inbound" {
-  type = "ingress"
+  type              = "ingress"
   security_group_id = "${aws_security_group.elb.id}"
 
   from_port   = 443
@@ -186,7 +186,7 @@ resource "aws_security_group_rule" "elb_allow_https_inbound" {
 }
 
 resource "aws_security_group_rule" "elb_allow_all_outbound" {
-  type = "egress"
+  type              = "egress"
   security_group_id = "${aws_security_group.elb.id}"
 
   from_port   = 0
