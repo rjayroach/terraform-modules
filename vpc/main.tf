@@ -1,14 +1,18 @@
 // variables
 
-variable "region" { }
 
-variable "include_public_subnet" { default = false }
+variable "create_public_subnet" { default = false }
 
-variable "vpc_cidr_block" {
-  description = "The CIDR block for the VPC"
+variable "domain" {
+  description = "The parent domain for the subdomain"
 }
 
-# NOTE: Not currently implemented
+variable "environment" {
+  description = "The environment to which the resources belong"
+}
+
+variable "region" { }
+
 variable "private_cidr_block" {
   description = "The CIDR block for the private subnet"
 }
@@ -17,12 +21,8 @@ variable "public_cidr_block" {
   description = "The CIDR block for the public subnet"
 }
 
-variable "domain" {
-  description = "The parent domain for the subdomain"
-}
-
-variable "environment" {
-  description = "The environment to which the resources belong"
+variable "vpc_cidr_block" {
+  description = "The CIDR block for the VPC"
 }
 
 /*
@@ -39,8 +39,12 @@ output "vpc_security_group_ids" {
   value = "${module.global-allow.group_id}"
 }
 
-output "subnet_id" {
+output "public_subnet_id" {
   value = "${aws_subnet.public.id}"
+}
+
+output "private_subnet_id" {
+  value = "${aws_subnet.private.id}"
 }
 
 /*
@@ -87,7 +91,7 @@ resource "aws_route" "internet_access" {
 
 # Create a subnet into which instances are launched
 resource "aws_subnet" "public" {
-  count = "${var.include_public_subnet}"
+  count = "${var.create_public_subnet}"
 
   vpc_id                  = "${aws_vpc.main.id}"
   availability_zone       = "${var.region}a"

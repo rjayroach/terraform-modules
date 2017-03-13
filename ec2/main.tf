@@ -1,22 +1,26 @@
 // variables
 
-variable "amis" {}
+variable "amis" { type = "map" }
 
 variable "region" {}
 
-variable "ec2_instance_type" { default = "t2.micro" }
+variable "ec2_instance_count" { }
 
-variable "environment" { default = "development" }
+variable "ec2_instance_type" { }
+
+variable "environment" { }
 
 variable "user" {}
 
 variable "vpc_id" {}
+
 
 // outputs
 
 output "public_ip" {
   value = "${aws_instance.ec2.public_ip}"
 }
+
 
 // implementation
 
