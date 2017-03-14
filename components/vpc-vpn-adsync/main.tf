@@ -1,44 +1,75 @@
 // variables
 
+variable "domain" {}
+
+variable "environment" { default = "development" }
+
+variable "password" {}
+
+variable "private_cidr_block" {}
+
+variable "public_cidr_block" {}
+
+variable "public_cidr_b_block" {}
+
 variable "region" {}
 
-variable "include_public_subnet" { default = false }
+variable "vpc_cidr_block" {}
 
-variable "vpc_cidr_block" {
-  description = "The CIDR block for the VPC"
-  default     = "172.16.0.0/20"
-}
-
-variable "private_cidr_block" {
-  description = "The CIDR block for the private subnet"
-  default     = "172.16.0.0/24"
-}
-
-variable "public_cidr_block" {
-  description = "The CIDR block for the public subnet"
-  default     = "172.16.1.0/24"
-}
-
-variable "domain" {
-  description = "The parent domain for the subdomain"
-}
-
-variable "environment" {
-  description = "The environment to which the resources belong"
-}
 
 // outputs
 
+output "default_security_group_ids" { value = [ "${module.global-allow.group_id}" ]}
+
+output "private_subnet_id" { value = "${module.vpc.private_subnet_id}" }
+
+output "public_subnet_id" { value = "${module.vpc.public_subnet_id}" }
+
+/*
+output "subdomain_zone_id" {
+  value = "${module.dns.subdomain.zone_id}"
+}
+*/
+
+output "vpc_id" { value = "${module.vpc.vpc_id}" }
+
+
 // implementation
 
+# module "adsync" {
+#   source          = "../../modules/adsync"
+
+#   adsync_password = "${var.password}"
+#   domain          = "${var.domain}"
+#   subnet_ids      = [ "${module.vpc.private_subnet_id}"]
+#   vpc_id          = "${module.vpc.vpc_id}"
+# }
+
+# module "dns" {
+#   source = "../../modules/route53"
+# }
+
+module "global-allow" {
+  source = "../../modules/sec-groups-global-allow"
+
+  environment = "${var.environment}"
+  vpc_id      = "${module.vpc.vpc_id}"
+}
+
 module "vpc" {
-  source = "../vpc"
+  source      = "../../modules/vpc"
+
+  domain              = "${var.domain}"
+  environment         = "${var.environment}"
+  private_cidr_block  = "${var.private_cidr_block}"
+  public_cidr_block   = "${var.public_cidr_block}"
+  public_cidr_b_block = "${var.public_cidr_b_block}"
+  region              = "${var.region}"
+  vpc_cidr_block      = "${var.vpc_cidr_block}"
 }
 
-module "vpn" {
-  source = "../vpn"
-}
+# module "vpn" {
+#   source = "../../modules/vpn"
 
-module "adsync" {
-  source = "../adsync"
-}
+#   vpc_id = "${module.vpc.vpc_id}"
+# }

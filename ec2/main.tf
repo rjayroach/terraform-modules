@@ -10,6 +10,10 @@ variable "ec2_instance_type" { }
 
 variable "environment" { }
 
+variable "security_groups" { type = "list" }
+
+variable "subnet_id" { }
+
 variable "user" {}
 
 variable "vpc_id" {}
@@ -27,18 +31,10 @@ output "public_ip" {
 resource "aws_instance" "ec2" {
   ami = "${lookup(var.amis, "${var.region}", "")}"
   instance_type = "${var.ec2_instance_type}"
-  vpc_security_group_ids = [
-    "${module.global-allow.group_id}"
-  ]
+  subnet_id = "${var.subnet_id}"
+  vpc_security_group_ids = [ "${var.security_groups}" ]
 
   tags {
     User = "${var.user}"
   }
-}
-
-module "global-allow" {
-  source = "../sec-groups"
-
-  environment = "${var.environment}"
-  vpc_id = "${var.vpc_id}"
 }

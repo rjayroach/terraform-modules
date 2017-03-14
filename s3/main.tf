@@ -17,11 +17,11 @@ output "name" { value = "${var.bucket_name}" }
 // implementation
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.bucket_name}";
+  bucket = "${var.bucket_name}"
   acl = "private"
 
   versioning {
-    enabled = var.versioning
+    enabled = "${var.versioning}"
   }
 
   tags {
