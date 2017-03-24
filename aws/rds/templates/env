@@ -1,0 +1,3 @@
+---
+recheck_api_prov:
+  DATABASE_HOST: ${db_instance_address}

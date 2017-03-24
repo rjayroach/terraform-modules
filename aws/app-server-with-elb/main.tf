@@ -1,4 +1,4 @@
-# modules/app-server-with-elb/main.tf
+# modules/aws/app-server-with-elb/main.tf
 # Creates:
 # - An EC2 instance onto which to deploy the application
 # - A keypair to assign to the EC2 for configuration by Ansible and ssh access
@@ -6,20 +6,18 @@
 # - Attach the EC2 to the ELB
 # - DNS Record(s) mapped to the ELB
 
-# TODO: Get the details for Debian
-# data "aws_ami" "debian" {
-#   most_recent = true
-#   filter {
-#     name = "name"
-#     values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"]
-#   }
-#   filter {
-#     name = "virtualization-type"
-#     values = ["hvm"]
-#   }
-#   owners = ["099720109477"] # Canonical
-# }
 
+### Variables
+
+variable "application" { description = "The application which these resources support" }
+variable "environment" { description = "The environment to which the resources belong" }
+variable "instance_type" { description = "The instance type for the manager and worker nodes" }
+variable "public_key" { description = "Contents of the public key used to connect to instances" }
+variable "server_cert_arn" { description = "The arn of the server certificate to install on the ELB" }
+variable "subnet_id" { description = "The ID of the VPC subnet" }
+variable "vpc_id" {}
+variable "vpc_security_group_ids" { description = "The security group ids" }
+variable "region" {}
 
 # Kubernetes on Debian 8.6
 variable "k8s-amis" {
@@ -29,15 +27,33 @@ variable "k8s-amis" {
   }
 }
 
-
 # Debian Jessie
 variable "debian-amis" {
   type    = "map"
   default = {
     us-east-1      = "ami-c8bda8a2"
     ap-southeast-1 = "ami-73974210"
+    us-gov-west-1  = "ami-35b5d516"
   }
 }
+
+
+### Outputs
+
+output "instance_id" {
+  value = "${aws_instance.app.instance_id}"
+}
+
+output "elb_dns_name" {
+  value = "${aws_elb.app.dns_name}"
+}
+
+output "elb_zone_id" {
+  value = "${aws_elb.app.zone_id}"
+}
+
+
+### Implementation
 
 resource "aws_key_pair" "ansible" {
   key_name   = "ansible-${var.application}"
@@ -109,33 +125,6 @@ resource "aws_elb" "app" {
 resource "aws_elb_attachment" "app" {
   elb      = "${aws_elb.app.id}"
   instance = "${aws_instance.app.id}"
-}
-
-
-# Create an ALIAS record for the API server pointing to the ELB
-# TODO: The subdomain zone_id needs to come from a var
-# TODO: see about passing in multiple hostnames in the var
-# resource "aws_route53_record" "elb" {
-#   zone_id = "${var.route53_zone_id}"
-#   name    = "${var.route53_hostname}"
-#   type    = "A"
-#   alias {
-#     name                   = "${aws_elb.app.dns_name}"
-#     zone_id                = "${aws_elb.app.zone_id}"
-#     evaluate_target_health = true
-#   }
-# }
-
-# Create an Alternative ALIAS record for the API server pointing to the ELB
-resource "aws_route53_record" "elb-alt" {
-  zone_id = "${var.route53_primary_zone_id}"
-  name    = "${var.route53_hostname}"
-  type    = "A"
-  alias {
-    name                   = "${aws_elb.app.dns_name}"
-    zone_id                = "${aws_elb.app.zone_id}"
-    evaluate_target_health = true
-  }
 }
 
 

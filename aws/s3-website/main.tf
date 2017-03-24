@@ -1,13 +1,57 @@
-# modules/s3-website/main.tf
+# modules/aws/s3-website/main.tf
 # Params:
 # - S3 Policy Bucket JSON file
 # Creates:
 # - An IAM user to deploy the application
 # - An IAM Policy Document with permissions to allow the IAM user to write to the S3 Bucket
 # - An S3 Bucket to deploy the application into
-# - A DNS Record mapped to the S3 Bucket
 # - An ENV file with the bucket name, region and the IAM User Credentials (used by Ember to deploy the app)
 
+
+### Variables
+variable "region" {}
+
+variable "allowed_ip" {
+  description = "The IP address that may access the bucket"
+}
+
+variable "application" {
+  description = "The name of the application (becomes the IAM User name)"
+}
+
+variable "bucket_name" {
+  description = "The name of the S3 bucket to which the application will be deployed"
+}
+
+variable "credentials_file" {
+  description = "The file name to write the bucket details and credentials"
+}
+
+variable "environment" {
+  description = "The environment to which the resources belong"
+}
+
+# variable "route53_zone_id" {
+#   description = "The zone id that the bucket hostname will be placed in"
+# }
+
+variable "api_url" {
+  description = "The remote url that serves the application's backend API"
+}
+
+
+### Outputs
+
+output "website_domain" {
+  value = "${aws_s3_bucket.app.website_domain}"
+}
+
+output "hosted_zone_id" {
+  value = "${aws_s3_bucket.app.hosted_zone_id}"
+}
+
+
+### Implementation
 
 # Create an IAM user to deploy the application to S3
 resource "aws_iam_user" "app" {
@@ -84,18 +128,6 @@ resource "aws_s3_bucket" "app" {
   }
 }
 
-# Create a DNS Record for the bucket
-resource "aws_route53_record" "app" {
-  zone_id = "${var.route53_zone_id}"
-  name    = "${var.bucket_name}"
-  type    = "A"
-  alias {
-    name                   = "${aws_s3_bucket.app.website_domain}"
-    zone_id                = "${aws_s3_bucket.app.hosted_zone_id}"
-    evaluate_target_health = true
-  }
-}
-
 
 # Create an ENV file used be ember-cli-deploy
 data "template_file" "envs" {
@@ -104,8 +136,9 @@ data "template_file" "envs" {
   vars {
     aws_bucket            = "${var.bucket_name}"
     aws_region            = "${var.region}"
-    aws_access_key_id_x     = "${aws_iam_access_key.app.id}"
-    aws_secret_access_key_x = "${aws_iam_access_key.app.secret}"
+    aws_access_key_id     = "${aws_iam_access_key.app.id}"
+    aws_secret_access_key = "${aws_iam_access_key.app.secret}"
+    api_url               = "${var.api_url}"
   }
 }
 

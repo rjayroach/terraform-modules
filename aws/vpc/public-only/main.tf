@@ -1,4 +1,4 @@
-# modules/aws/vpc/main.tf
+# modules/aws/vpc/public-only/main.tf
 # Creates:
 # - A VPC tagged with the Environment
 # - An Internet Gateway for EC2s to reach the Internet
@@ -8,6 +8,59 @@
 # - A Route53 subdomain for the VPC
 # - An NS record in the parent domain pointing to the  subdomain
 
+
+### Variables
+
+variable "vpc_cidr_block" {
+  description = "The CIDR block for the VPC"
+  default     = "172.16.0.0/20"
+}
+
+# NOTE: Not currently implemented
+variable "private_cidr_block" {
+  description = "The CIDR block for the private subnet"
+  default     = "172.16.0.0/24"
+}
+
+variable "private_availability_zone" {
+  description = "The availability zone for the private subnet"
+}
+
+variable "public_cidr_block" {
+  description = "The CIDR block for the public subnet"
+  default     = "172.16.1.0/24"
+}
+
+variable "public_availability_zone" {
+  description = "The availability zone for the public subnet"
+}
+
+variable "environment" {
+  description = "The environment to which the resources belong"
+}
+
+
+### Outputs
+
+output "vpc_security_group_ids" {
+  # value = ["${aws_security_group.appserver.id}"]
+  value = "${aws_security_group.public.id}"
+}
+
+output "subnet_id" {
+  value = "${aws_subnet.public.id}"
+}
+
+output "subnet_id_2" {
+  value = "${aws_subnet.public-2.id}"
+}
+
+output "vpc_id" {
+  value = "${aws_vpc.main.id}"
+}
+
+
+### Implementation
 
 # Create a VPC into which resources are provisioned
 resource "aws_vpc" "main" {
@@ -33,9 +86,21 @@ resource "aws_route" "internet_access" {
 resource "aws_subnet" "public" {
   vpc_id                  = "${aws_vpc.main.id}"
   cidr_block              = "${var.public_cidr_block}"
+  availability_zone       = "${var.public_availability_zone}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "public-${var.environment}"
+    Name        = "public-${var.environment}-1"
+  }
+}
+
+# Create a subnet into which instances are launched
+resource "aws_subnet" "public-2" {
+  vpc_id                  = "${aws_vpc.main.id}"
+  cidr_block              = "${var.private_cidr_block}"
+  availability_zone       = "${var.private_availability_zone}"
+  map_public_ip_on_launch = true
+  tags {
+    Name        = "public-${var.environment}-2"
   }
 }
 
