@@ -6,6 +6,21 @@
 # - Attach the EC2 to the ELB
 # - DNS Record(s) mapped to the ELB
 
+# TODO: Get the details for Debian
+# data "aws_ami" "debian" {
+#   most_recent = true
+#   filter {
+#     name = "name"
+#     values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"]
+#   }
+#   filter {
+#     name = "virtualization-type"
+#     values = ["hvm"]
+#   }
+#   owners = ["099720109477"] # Canonical
+# }
+
+
 
 ### Variables
 
@@ -40,15 +55,15 @@ variable "debian-amis" {
 
 ### Outputs
 
+output "dns_name" {
+  value = "${aws_elb.app.dns_name}"
+}
+
 output "instance_id" {
   value = "${aws_instance.app.instance_id}"
 }
 
-output "elb_dns_name" {
-  value = "${aws_elb.app.dns_name}"
-}
-
-output "elb_zone_id" {
+output "zone_id" {
   value = "${aws_elb.app.zone_id}"
 }
 

@@ -5,20 +5,20 @@
 
 ### Variables
 
-variable "zone_id" {
-  description = "The zone_id of the domain in which this hostname is created"
-}
-
-variable "name" {
-  description = "The hostname to be created"
+variable "alias_name" {
+  description = "The name of the resource being aliased"
 }
 
 variable "alias_zone_id" {
   description = "The zone id of the resource being aliased"
 }
 
-variable "alias_name" {
-  description = "The name of the resource being aliased"
+variable "name" {
+  description = "The hostname to be created"
+}
+
+variable "zone_id" {
+  description = "The zone_id of the domain in which this hostname is created"
 }
 
 

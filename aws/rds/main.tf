@@ -21,6 +21,7 @@ variable "parameter_group_name" {}
 variable "multi_az" {}
 variable "backup_retention_period" {}
 variable "final_snapshot_identifier" {}
+variable "storage_encrypted" {}
 
 variable "env_file" {
   description = "The file name to write the endpoint hostname to"
@@ -96,7 +97,7 @@ resource "aws_db_instance" "main" {
   final_snapshot_identifier = "${var.final_snapshot_identifier}"
   # count = 1
   count = "${var.identifier == "" ? 0 : 1}"
-  storage_encrypted = true
+  storage_encrypted = "${var.storage_encrypted}"
   # kms_key_id
 }
 

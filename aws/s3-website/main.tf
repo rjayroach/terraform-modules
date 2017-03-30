@@ -31,22 +31,22 @@ variable "environment" {
   description = "The environment to which the resources belong"
 }
 
-# variable "route53_zone_id" {
-#   description = "The zone id that the bucket hostname will be placed in"
-# }
-
 variable "api_url" {
   description = "The remote url that serves the application's backend API"
+}
+
+variable "iam_user_name" {
+  description = "The name of the IAM user to be created to administrate the S3 bucket"
 }
 
 
 ### Outputs
 
-output "website_domain" {
+output "dns_name" {
   value = "${aws_s3_bucket.app.website_domain}"
 }
 
-output "hosted_zone_id" {
+output "zone_id" {
   value = "${aws_s3_bucket.app.hosted_zone_id}"
 }
 
@@ -55,7 +55,7 @@ output "hosted_zone_id" {
 
 # Create an IAM user to deploy the application to S3
 resource "aws_iam_user" "app" {
-  name = "${var.application}-${var.environment}"
+  name = "${var.iam_user_name}"
 }
 
 
