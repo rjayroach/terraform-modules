@@ -24,8 +24,31 @@
 
 ### Variables
 
-variable "application" { description = "The application which these resources support" }
-variable "environment" { description = "The environment to which the resources belong" }
+variable "application" {
+  default = "Set by the TF component (change me)"
+  description = "The application to which the resources belong"
+}
+
+variable "component" {
+  default = "Set by the TF component (change me)"
+  description = "The environment to which the resources belong"
+}
+
+variable "environment" {
+  default = "Set by the TF component (change me)"
+  description = "The environment to which the resources belong"
+}
+
+variable "resource" {
+  default = "Set by the TF component (change me)"
+  description = "The resource to which the resources belong"
+}
+
+variable "service" {
+  default = "Set by the TF component (change me)"
+  description = "The environment to which the resources belong"
+}
+
 variable "instance_type" { description = "The instance type for the manager and worker nodes" }
 variable "public_key" { description = "Contents of the public key used to connect to instances" }
 variable "server_cert_arn" { description = "The arn of the server certificate to install on the ELB" }
@@ -83,9 +106,11 @@ resource "aws_instance" "app" {
   vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
   subnet_id              = "${var.subnet_id}"
   tags {
+    Name        = "Set by the TF component (change me)"
+    Component   = "${var.component}"
     Environment = "${var.environment}"
-    Name        = "master-1"
-    Role        = "master"
+    Resource    = "${var.resource}"
+    Service     = "${var.service}"
   }
 }
 

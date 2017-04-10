@@ -1,13 +1,11 @@
 # modules/aws/ec2/bastion-host/main.tf
 
-
 ### Variables
 
-variable "bastion_host_permit_ip" {
-  type = "list"
+variable "bastion_cidr" {
+  description = "The CIDR block for the Bastion Host"
+  default     = "0.0.0.0/0"
 }
-
-variable "region" {}
 
 
 ### Outputs
@@ -22,13 +20,13 @@ output "instance_ips" {
 resource "aws_security_group" "vpc-xxxxxxxx-bastion-host-inbound-from-internet" {
   name        = "bastion-host-inbound-from-internet"
   description = "Bastion host inbound from internet"
-  vpc_id      = "vpc-xxxxxxxx"
+  vpc_id      = "${module.vpc.vpc_id}"
 
   ingress {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    cidr_blocks     = "${var.bastion_host_permit_ip}"
+    cidr_blocks     = "${var.bastion_cidr}"
   }
 
   egress {
@@ -43,7 +41,7 @@ resource "aws_security_group" "vpc-xxxxxxxx-bastion-host-inbound-from-internet" 
 resource "aws_security_group" "vpc-xxxxxxxx-bastion-host-internal-interface" {
   name        = "bastion-host-internal-interface"
   description = "public subnet to private subnet communications"
-  vpc_id      = "vpc-xxxxxxxx"
+  vpc_id      = "${module.vpc.vpc_id}"
 
   ingress {
     from_port       = 22

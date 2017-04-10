@@ -6,7 +6,7 @@
 
 ### Variables
 variable "name" {
-  description = "The parent domain for the subdomain"
+  description = "The subdomain's FQDN"
 }
 
 variable "parent_zone_id" {
@@ -31,7 +31,7 @@ resource "aws_route53_zone" "subdomain" {
 
 # Create NS records for the subdomain in the parent domain
 resource "aws_route53_record" "subdomain_ns" {
-  name    = "${var.name}."
+  name    = "${var.name}"
   ttl     = "300"
   type    = "NS"
   zone_id = "${var.parent_zone_id}"

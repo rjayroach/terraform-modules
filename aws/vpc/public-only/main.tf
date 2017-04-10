@@ -11,47 +11,46 @@
 
 ### Variables
 
-variable "vpc_cidr_block" {
-  description = "The CIDR block for the VPC"
-  default     = "172.16.0.0/20"
+# NOTE: Not currently implemented
+variable "subnet_az_public_1" {
+  description = "The availability zone for the private subnet"
 }
 
-# NOTE: Not currently implemented
-variable "private_cidr_block" {
+variable "subnet_az_public_2" {
+  description = "The availability zone for the public subnet"
+}
+
+variable "subnet_cidr_public_1" {
   description = "The CIDR block for the private subnet"
   default     = "172.16.0.0/24"
 }
 
-variable "private_availability_zone" {
-  description = "The availability zone for the private subnet"
-}
-
-variable "public_cidr_block" {
+variable "subnet_cidr_public_2" {
   description = "The CIDR block for the public subnet"
   default     = "172.16.1.0/24"
 }
 
-variable "public_availability_zone" {
-  description = "The availability zone for the public subnet"
+variable "vpc_cidr" {
+  description = "The CIDR block for the VPC"
+  default     = "172.16.0.0/20"
 }
 
-variable "environment" {
+variable "vpc_tag_name" {
   description = "The environment to which the resources belong"
 }
 
 
 ### Outputs
 
-output "vpc_security_group_ids" {
-  # value = ["${aws_security_group.appserver.id}"]
+output "security_group_id_public" {
   value = "${aws_security_group.public.id}"
 }
 
-output "subnet_id" {
-  value = "${aws_subnet.public.id}"
+output "subnet_id_public_1" {
+  value = "${aws_subnet.public-1.id}"
 }
 
-output "subnet_id_2" {
+output "subnet_id_public_2" {
   value = "${aws_subnet.public-2.id}"
 }
 
@@ -64,9 +63,9 @@ output "vpc_id" {
 
 # Create a VPC into which resources are provisioned
 resource "aws_vpc" "main" {
-  cidr_block = "${var.vpc_cidr_block}"
+  cidr_block = "${var.vpc_cidr}"
   tags {
-    Name = "${var.environment}"
+    Name = "${var.vpc_tag_name}"
   }
 }
 
@@ -83,24 +82,24 @@ resource "aws_route" "internet_access" {
 }
 
 # Create a subnet into which instances are launched
-resource "aws_subnet" "public" {
+resource "aws_subnet" "public-1" {
   vpc_id                  = "${aws_vpc.main.id}"
-  cidr_block              = "${var.public_cidr_block}"
-  availability_zone       = "${var.public_availability_zone}"
+  cidr_block              = "${var.subnet_cidr_public_1}"
+  availability_zone       = "${var.subnet_az_public_1}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "public-${var.environment}-1"
+    Name        = "${var.vpc_tag_name}-public-1"
   }
 }
 
 # Create a subnet into which instances are launched
 resource "aws_subnet" "public-2" {
   vpc_id                  = "${aws_vpc.main.id}"
-  cidr_block              = "${var.private_cidr_block}"
-  availability_zone       = "${var.private_availability_zone}"
+  cidr_block              = "${var.subnet_cidr_public_2}"
+  availability_zone       = "${var.subnet_az_public_2}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "public-${var.environment}-2"
+    Name        = "${var.vpc_tag_name}-public-2"
   }
 }
 
@@ -109,7 +108,7 @@ resource "aws_security_group" "public" {
   description = "Public Subnet Security Group"
   vpc_id      = "${aws_vpc.main.id}"
   tags {
-    Name        = "${var.environment}-public"
+    Name        = "${var.vpc_tag_name}-public"
   }
 }
 

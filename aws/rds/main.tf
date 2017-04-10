@@ -24,7 +24,11 @@ variable "final_snapshot_identifier" {}
 variable "storage_encrypted" {}
 
 variable "env_file" {
-  description = "The file name to write the endpoint hostname to"
+  description = "The full path to the file which to write the endpoint to"
+}
+
+variable "ansible_vars_key" {
+  description = "The key under which to write the endpoint"
 }
 
 variable "vpc_id" {}
@@ -108,6 +112,7 @@ data "template_file" "envs" {
   depends_on = ["aws_db_instance.main"]
   vars {
     db_instance_address = "${aws_db_instance.main.address}"
+    ansible_vars_key    = "${var.ansible_vars_key}"
   }
 }
 

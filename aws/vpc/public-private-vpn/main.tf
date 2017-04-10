@@ -3,22 +3,35 @@
 # Creates:
 
 
+variable "bastion_cidr" {
+  description = "The CIDR block for the Bastion Host"
+  default     = "0.0.0.0/0"
+}
+
 ### Variables
 
-variable "vpc_cidr_block" {
+variable "vpc_cidr" {
   description = "The CIDR block for the VPC"
   default     = "10.0.0.0/16"
 }
 
 # NOTE: Not currently implemented
-variable "private_cidr_block" {
+variable "subnet_cidr_private" {
   description = "The CIDR block for the private subnet"
   default     = "10.0.1.0/24"
 }
 
-variable "public_cidr_block" {
+variable "subnet_az_private" {
+  description = "The availability zone for the private subnet"
+}
+
+variable "subnet_cidr_public" {
   description = "The CIDR block for the public subnet"
   default     = "10.0.0.0/24"
+}
+
+variable "subnet_az_public" {
+  description = "The availability zone for the public subnet"
 }
 
 variable "environment" {
@@ -32,7 +45,7 @@ output "vpc_id" {
   value = "${aws_vpc.main.id}"
 }
 
-output "subnet_id" {
+output "subnet_id_public" {
   value = "${aws_subnet.public.id}"
 }
 
@@ -41,12 +54,13 @@ output "vpc_security_group_ids" {
   value = "${aws_security_group.bastion-host-inbound-from-internet.id}"
 }
 
+# TODO: Add the private IP of the internal server for this in order to create a Route53 hostname entry
 
 
 ### Implementation
 
 resource "aws_vpc" "main" {
-  cidr_block           = "${var.vpc_cidr_block}"
+  cidr_block           = "${var.vpc_cidr}"
   enable_dns_hostnames = false
   enable_dns_support   = true
   instance_tenancy     = "default"
@@ -69,7 +83,7 @@ resource "aws_vpn_gateway" "main" {
 # subnet-61d8b628-subnet-61d8b628
 resource "aws_subnet" "private" {
   vpc_id                  = "${aws_vpc.main.id}"
-  cidr_block              = "${var.private_cidr_block}"
+  cidr_block              = "${var.subnet_cidr_private}"
   # availability_zone       = "us-east-1d"
   map_public_ip_on_launch = false
   tags {}
@@ -78,7 +92,7 @@ resource "aws_subnet" "private" {
 # subnet-60d8b629-subnet-60d8b629
 resource "aws_subnet" "public" {
   vpc_id                  = "${aws_vpc.main.id}"
-  cidr_block              = "${var.public_cidr_block}"
+  cidr_block              = "${var.subnet_cidr_public}"
   # availability_zone       = "us-east-1d"
   map_public_ip_on_launch = false
   tags {}
@@ -161,7 +175,7 @@ resource "aws_security_group" "bastion-host-inbound-from-internet" {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    cidr_blocks     = ["27.125.142.130/32"]
+    cidr_blocks     = ["${var.bastion_cidr}"]
   }
 
   egress {
