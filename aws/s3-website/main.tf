@@ -11,7 +11,7 @@
 ### Variables
 variable "region" {}
 
-variable "allowed_ip" {
+variable "access_cidr" {
   description = "The IP address that may access the bucket"
 }
 
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "app" {
 #       test     = "NotIpAddress"
 #       variable = "aws:SourceIp"
 #       values   = [
-#         "${var.allowed_ip}"
+#         "${var.access_cidr}"
 #       ]
 #     }
 #   }

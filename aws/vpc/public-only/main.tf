@@ -11,7 +11,6 @@
 
 ### Variables
 
-# NOTE: Not currently implemented
 variable "subnet_az_public_1" {
   description = "The availability zone for the private subnet"
 }
@@ -30,12 +29,12 @@ variable "subnet_cidr_public_2" {
   default     = "172.16.1.0/24"
 }
 
-variable "vpc_cidr" {
+variable "cidr" {
   description = "The CIDR block for the VPC"
   default     = "172.16.0.0/20"
 }
 
-variable "vpc_tag_name" {
+variable "tag_name" {
   description = "The environment to which the resources belong"
 }
 
@@ -46,12 +45,24 @@ output "security_group_id_public" {
   value = "${aws_security_group.public.id}"
 }
 
+output "subnet_cidr_public_1" {
+  value = "${aws_subnet.public-1.cidr_block}"
+}
+
+output "subnet_cidr_public_2" {
+  value = "${aws_subnet.public-2.cidr_block}"
+}
+
 output "subnet_id_public_1" {
   value = "${aws_subnet.public-1.id}"
 }
 
 output "subnet_id_public_2" {
   value = "${aws_subnet.public-2.id}"
+}
+
+output "cidr" {
+  value = "${aws_vpc.main.cidr_block}"
 }
 
 output "vpc_id" {
@@ -63,9 +74,9 @@ output "vpc_id" {
 
 # Create a VPC into which resources are provisioned
 resource "aws_vpc" "main" {
-  cidr_block = "${var.vpc_cidr}"
+  cidr_block = "${var.cidr}"
   tags {
-    Name = "${var.vpc_tag_name}"
+    Name = "${var.tag_name}"
   }
 }
 
@@ -88,7 +99,7 @@ resource "aws_subnet" "public-1" {
   availability_zone       = "${var.subnet_az_public_1}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "${var.vpc_tag_name}-public-1"
+    Name        = "${var.tag_name}-public-1"
   }
 }
 
@@ -99,7 +110,7 @@ resource "aws_subnet" "public-2" {
   availability_zone       = "${var.subnet_az_public_2}"
   map_public_ip_on_launch = true
   tags {
-    Name        = "${var.vpc_tag_name}-public-2"
+    Name        = "${var.tag_name}-public-2"
   }
 }
 
@@ -108,7 +119,7 @@ resource "aws_security_group" "public" {
   description = "Public Subnet Security Group"
   vpc_id      = "${aws_vpc.main.id}"
   tags {
-    Name        = "${var.vpc_tag_name}-public"
+    Name        = "${var.tag_name}-public"
   }
 }
 

@@ -3,10 +3,10 @@
 # Creates:
 
 
-variable "bastion_cidr" {
-  description = "The CIDR block for the Bastion Host"
-  default     = "0.0.0.0/0"
-}
+# variable "bastion_cidr" {
+#   description = "The CIDR block for the Bastion Host"
+#   default     = "0.0.0.0/0"
+# }
 
 ### Variables
 
@@ -34,25 +34,32 @@ variable "subnet_az_public" {
   description = "The availability zone for the public subnet"
 }
 
-variable "environment" {
+variable "vpc_tag_name" {
   description = "The environment to which the resources belong"
 }
 
 
 ### Outputs
+/*
+output "security_group_id_public" {
+  # value = ["${aws_security_group.appserver.id}"]
+  value = "${aws_security_group.bastion-host-inbound-from-internet.id}"
+}
+*/
+
+output "sg_bastion_id" {
+  value = "${aws_security_group.bastion-host-inbound-from-internet.id}"
+}
+
+output "subnet_public_id" {
+  value = "${aws_subnet.public.id}"
+}
 
 output "vpc_id" {
   value = "${aws_vpc.main.id}"
 }
 
-output "subnet_id_public" {
-  value = "${aws_subnet.public.id}"
-}
 
-output "vpc_security_group_ids" {
-  # value = ["${aws_security_group.appserver.id}"]
-  value = "${aws_security_group.bastion-host-inbound-from-internet.id}"
-}
 
 # TODO: Add the private IP of the internal server for this in order to create a Route53 hostname entry
 
@@ -85,6 +92,7 @@ resource "aws_subnet" "private" {
   vpc_id                  = "${aws_vpc.main.id}"
   cidr_block              = "${var.subnet_cidr_private}"
   # availability_zone       = "us-east-1d"
+  availability_zone       = "${var.subnet_az_private}"
   map_public_ip_on_launch = false
   tags {}
 }
@@ -94,6 +102,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = "${aws_vpc.main.id}"
   cidr_block              = "${var.subnet_cidr_public}"
   # availability_zone       = "us-east-1d"
+  availability_zone       = "${var.subnet_az_public}"
   map_public_ip_on_launch = false
   tags {}
 }
@@ -171,12 +180,12 @@ resource "aws_security_group" "bastion-host-inbound-from-internet" {
   description = "Bastion host inbound from internet"
   vpc_id                  = "${aws_vpc.main.id}"
 
-  ingress {
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    cidr_blocks     = ["${var.bastion_cidr}"]
-  }
+  # ingress {
+  #   from_port       = 22
+  #   to_port         = 22
+  #   protocol        = "tcp"
+  #   cidr_blocks     = ["${var.bastion_cidr}"]
+  # }
 
   egress {
     from_port       = 0
@@ -191,7 +200,7 @@ resource "aws_security_group" "bastion-host-inbound-from-internet" {
 resource "aws_security_group" "bastion-host-internal-interface" {
   name        = "bastion-host-internal-interface"
   description = "public subnet to private subnet communications"
-  vpc_id                  = "${aws_vpc.main.id}"
+  vpc_id      = "${aws_vpc.main.id}"
 
   ingress {
     from_port       = 22
@@ -247,13 +256,13 @@ resource "aws_security_group" "launch-wizard" {
   }
 
   # Allows ssh connection from bastion host in public subnet to API Server in private subnet
-  ingress {
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.bastion-host-inbound-from-internet.id}"]
-    self            = false
-  }
+  # ingress {
+  #   from_port       = 22
+  #   to_port         = 22
+  #   protocol        = "tcp"
+  #   security_groups = ["${aws_security_group.bastion-host-inbound-from-internet.id}"]
+  #   self            = false
+  # }
 
   egress {
     from_port       = 0
@@ -265,7 +274,8 @@ resource "aws_security_group" "launch-wizard" {
 
 
 # Connects to API server instance in the private subnet (move out of the VPC definition to recheck)
-resource "aws_network_interface" "eni-c63ca427" {
+# main was eni-c63ca427
+resource "aws_network_interface" "main" {
   subnet_id         = "${aws_subnet.private.id}"
   private_ips       = ["10.0.1.118"]
   security_groups   = ["${aws_security_group.launch-wizard.id}"]
@@ -287,6 +297,7 @@ resource "aws_network_interface" "nat-gateway" {
 
 
 # Interface for the bastion host (move out of the VPC definition to bastion definition)
+/*
 resource "aws_network_interface" "eni-9a138b7b" {
   subnet_id         = "${aws_subnet.public.id}"
   private_ips       = ["10.0.0.184"]
@@ -297,6 +308,7 @@ resource "aws_network_interface" "eni-9a138b7b" {
     device_index = 0
   }
 }
+*/
 
 
 # eipalloc-9a5c6ea4
@@ -313,8 +325,8 @@ resource "aws_nat_gateway" "private-to-internet" {
 }
 
 
-# 
-resource "aws_network_acl" "acl-dceb57ba" {
+# main was acl-dceb57ba
+resource "aws_network_acl" "main" {
   vpc_id       = "${aws_vpc.main.id}"
   subnet_ids   = ["${aws_subnet.private.id}", "${aws_subnet.public.id}"]
 
